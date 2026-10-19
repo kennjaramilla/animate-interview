@@ -2,6 +2,7 @@ import { vec2, set } from '../math/vec2';
 import { WORLD } from '../config';
 import { createBehaviors } from '../behaviors';
 import type { Behavior } from '../behaviors/Behavior';
+import { Ball } from './Ball';
 import { PetRig } from './PetRig';
 import type { PetBehavior, PointerState, RigControls } from './types';
 
@@ -19,6 +20,7 @@ export class PetSimulation {
   readonly pointer: PointerState = { active: false, pos: vec2() };
   readonly rig: PetRig;
   readonly controls: RigControls;
+  readonly ball: Ball;
   time = 0;
 
   private readonly behaviors: Record<PetBehavior, Behavior>;
@@ -38,7 +40,9 @@ export class PetSimulation {
       lookAt: null,
       reachFor: null,
       crouch: 0,
+      jump: 0,
     };
+    this.ball = new Ball(width, this.groundY);
     this.behaviors = createBehaviors();
     this.current = this.behaviors.idle;
     this.current.enter(this);
@@ -83,7 +87,10 @@ export class PetSimulation {
     this.time += dt;
     this.controls.lookAt = null;
     this.controls.reachFor = null;
+    this.controls.jump = 0;
     this.current.update(this, dt);
     this.rig.update(this.controls, dt);
+    // After the rig, so a held ball sits on this step's mouth position.
+    this.ball.update(this.rig, dt);
   }
 }
