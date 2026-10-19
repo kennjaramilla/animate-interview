@@ -1,19 +1,22 @@
 import type { Leg, PetRig } from '../core/PetRig';
 import type { Vec2 } from '../math/vec2';
 import { PALETTE, RIG } from '../config';
+import type { TexturedBody } from './TexturedBody';
 
 /**
  * Draws the rig. Everything is built from the solved joints each frame, so
  * there are no sprite sheets: the shapes are skinned straight onto the bones.
  * Caller has already applied the turn transform about the hips.
  */
-export function drawPet(ctx: CanvasRenderingContext2D, rig: PetRig): void {
+export function drawPet(ctx: CanvasRenderingContext2D, rig: PetRig, texturedBody: TexturedBody | null = null): void {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   for (const leg of rig.legs) if (leg.far) drawLeg(ctx, leg, PALETTE.furShade);
   drawTail(ctx, rig.tail);
-  drawBody(ctx, rig.bodyRing);
+  // Textured mode warps the body image over the mesh; falls back to vectors until it has loaded.
+  if (texturedBody?.ready) texturedBody.draw(ctx, rig.bodyMesh);
+  else drawBody(ctx, rig.bodyRing);
   drawNeck(ctx, rig);
   for (const leg of rig.legs) if (!leg.far) drawLeg(ctx, leg, PALETTE.fur);
   drawHead(ctx, rig);

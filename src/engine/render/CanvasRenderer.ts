@@ -4,6 +4,7 @@ import { BALL, PALETTE } from '../config';
 import { BallPainter } from './drawBall';
 import { drawPet } from './drawPet';
 import { DebugOverlay } from './DebugOverlay';
+import { TexturedBody } from './TexturedBody';
 
 /** Pet opacity under the skeleton overlay, so bones stay readable. */
 const DEBUG_PET_ALPHA = 0.45;
@@ -26,6 +27,9 @@ export class CanvasRenderer {
   private readonly overlay = new DebugOverlay();
   /** Draws the skeleton / IK overlay on top of the pet. */
   debug = false;
+  /** Warps the body texture over the mesh instead of drawing the vector body. */
+  textured = true;
+  private readonly texturedBody = new TexturedBody();
   private frameMs = 0;
   private hudTimer = HUD_INTERVAL;
   private perfText = '';
@@ -59,6 +63,7 @@ export class CanvasRenderer {
 
   dispose(): void {
     window.removeEventListener('resize', this.resize);
+    this.texturedBody.dispose();
   }
 
   /** Sizes the backing store to the device pixel ratio so lines stay crisp on HiDPI screens. */
@@ -83,7 +88,7 @@ export class CanvasRenderer {
     this.drawPet(sim);
     // After the pet, so a held ball reads as gripped in the mouth.
     this.ball.draw(this.ctx, sim.ball);
-    if (this.debug) this.overlay.draw(ctx, sim);
+    if (this.debug) this.overlay.draw(ctx, sim, this.textured);
     if (sim.pointer.active) this.drawPointer(sim.pointer.pos.x, sim.pointer.pos.y);
     this.drawHud(sim);
   }
@@ -128,7 +133,7 @@ export class CanvasRenderer {
     ctx.scale(sx, 1);
     ctx.translate(-rig.hips.x, 0);
     ctx.globalAlpha = this.debug ? DEBUG_PET_ALPHA : 1;
-    drawPet(ctx, rig);
+    drawPet(ctx, rig, this.textured ? this.texturedBody : null);
     ctx.restore();
   }
 
