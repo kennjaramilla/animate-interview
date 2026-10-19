@@ -1,6 +1,6 @@
 # Creative Frontend Engineering Challenge: Interactive Pet Canvas
 
-> **Submission notes:** the pet is a procedurally rigged dog (IK spine, neck and legs, a breathing body mesh, cursor tracking, a trot gait and fetch with intercept planning). See [ARCHITECTURE.md](ARCHITECTURE.md) for how it works. Run `npm install && npm run dev`, then try the buttons or keys `1` `2` `3`, and press `D` for the skeleton view. `npm test` runs the unit tests.
+> **Submission notes:** the pet is a procedurally rigged dog (IK spine, neck and legs, a breathing body mesh, cursor tracking, a trot gait and fetch with intercept planning). See [ARCHITECTURE.md](ARCHITECTURE.md) for how it works. Run `npm install && npm run dev`, then try the buttons or keys `1` `2` `3`, press `D` for the skeleton view and `T` to switch between the textured and vector body. `npm test` runs the unit tests.
 
 Welcome! The goal of this take-home challenge is to evaluate your skills in real-time browser graphics, asset rigging, and vector transformations using an HTML5 Canvas workspace.
 

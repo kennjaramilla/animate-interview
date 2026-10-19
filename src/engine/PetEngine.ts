@@ -55,6 +55,20 @@ export class PetAnimationEngine {
     return this.renderer.debug;
   }
 
+  get textured(): boolean {
+    return this.renderer.textured;
+  }
+
+  /** Switches the body between the warped image (textured) and the vector outline. */
+  public setTextured(enabled: boolean): void {
+    this.renderer.textured = enabled;
+  }
+
+  public toggleTextured(): boolean {
+    this.renderer.textured = !this.renderer.textured;
+    return this.renderer.textured;
+  }
+
   private startLoop() {
     this.lastTime = performance.now();
     this.animationFrameId = requestAnimationFrame(this.renderStep);

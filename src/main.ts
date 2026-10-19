@@ -37,13 +37,17 @@ appDiv.innerHTML = `
         <button id="btn-debug" aria-pressed="false" class="${btn} bg-slate-900 hover:bg-slate-700 text-cyan-300 border border-cyan-700/60 aria-pressed:bg-cyan-500 aria-pressed:text-slate-950 aria-pressed:border-cyan-400">
           Skeleton 🦴
         </button>
+        <button id="btn-texture" aria-pressed="false" class="${btn} bg-slate-900 hover:bg-slate-700 text-pink-300 border border-pink-700/60 aria-pressed:bg-pink-400 aria-pressed:text-slate-950 aria-pressed:border-pink-300">
+          Texture 🖼️
+        </button>
       </div>
       <p class="text-xs text-slate-500 text-center leading-6">
         Shortcuts:
         <kbd class="${kbd}">1</kbd> idle ·
         <kbd class="${kbd}">2</kbd> walk ·
         <kbd class="${kbd}">3</kbd> fetch ·
-        <kbd class="${kbd}">D</kbd> skeleton
+        <kbd class="${kbd}">D</kbd> skeleton ·
+        <kbd class="${kbd}">T</kbd> texture
       </p>
     </div>
   </div>
@@ -56,11 +60,14 @@ const engine = new PetAnimationEngine(canvas);
 // 3. Wire the controls; the engine's listener keeps the highlight right even when a behavior ends itself.
 const behaviorButtons = document.querySelectorAll<HTMLButtonElement>('button[data-behavior]');
 const debugButton = document.getElementById('btn-debug') as HTMLButtonElement;
+const textureButton = document.getElementById('btn-texture') as HTMLButtonElement;
 
 const showBehavior = (active: PetBehavior): void => {
   for (const b of behaviorButtons) b.setAttribute('aria-pressed', String(b.dataset.behavior === active));
 };
 const showDebug = (enabled: boolean): void => debugButton.setAttribute('aria-pressed', String(enabled));
+const showTexture = (enabled: boolean): void => textureButton.setAttribute('aria-pressed', String(enabled));
+showTexture(engine.textured);
 
 engine.onBehaviorChange(showBehavior);
 showBehavior(engine.behavior);
@@ -69,6 +76,7 @@ for (const b of behaviorButtons) {
   b.addEventListener('click', () => engine.setBehavior(b.dataset.behavior as PetBehavior));
 }
 debugButton.addEventListener('click', () => showDebug(engine.toggleDebug()));
+textureButton.addEventListener('click', () => showTexture(engine.toggleTextured()));
 
 const shortcuts: Record<string, PetBehavior> = { '1': 'idle', '2': 'walk', '3': 'fetch' };
 
@@ -80,4 +88,5 @@ window.addEventListener('keydown', (event) => {
   const behavior = shortcuts[event.key];
   if (behavior) engine.setBehavior(behavior);
   else if (event.key === 'd' || event.key === 'D') showDebug(engine.toggleDebug());
+  else if (event.key === 't' || event.key === 'T') showTexture(engine.toggleTextured());
 });
