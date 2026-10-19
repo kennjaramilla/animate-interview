@@ -63,6 +63,12 @@ export class Ball implements Projectile {
     this.settled = false;
   }
 
+  hide(): void {
+    this.state = 'hidden';
+    set(this.vel, 0, 0);
+    this.settled = false;
+  }
+
   launch(vx: number, vy: number): void {
     this.state = 'free';
     set(this.vel, vx, vy);

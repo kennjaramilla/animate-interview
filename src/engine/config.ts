@@ -71,3 +71,32 @@ export const BALL = {
   /** Below this ground speed a rolling ball is considered settled. */
   restSpeed: 6,
 };
+
+/** Fetch tuning. Heights are ball-centre heights above the floor. */
+export const FETCH = {
+  /** Anticipation before the throw: play bow while the ball is wound up. */
+  windup: 0.65,
+  /** High lob: lots of hang time, caught standing as it drops. */
+  lobTime: { min: 0.95, max: 1.25 },
+  /** Flat, fast throw that tends to pass overhead and needs a jump. */
+  lineDriveTime: { min: 0.6, max: 0.75 },
+  lineDriveChance: 0.35,
+  /** Keep the arc's apex at least this far below the top of the canvas. */
+  apexMargin: 26,
+  runSpeed: 300,
+  carrySpeed: 170,
+  gotItBeat: 0.35,
+  reactionTime: 0.18,
+  /** Hips → mouth horizontal distance when meeting the ball (measured from the rig). */
+  reachOffset: 115,
+  reachSlack: 22,
+  standReach: 125,
+  jumpReach: 235,
+  jumpPatience: 0.15,
+  /** Start stretching towards the planned catch point this many seconds early. */
+  reachLead: 0.45,
+  /** Mouth-to-ball distance (beyond the radius) that counts as a catch. */
+  catchSlop: 9,
+  /** Give up on a ball that can't be reached (e.g. wedged where the dog can't go). */
+  giveUpAfter: 9,
+};
