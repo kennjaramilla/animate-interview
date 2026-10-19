@@ -1,6 +1,15 @@
 import type { PetSimulation } from '../core/PetSimulation';
+import type { PetBehavior } from '../core/types';
 import { PALETTE } from '../config';
 import { drawPet } from './drawPet';
+import { DebugOverlay } from './DebugOverlay';
+
+/** Pet opacity under the skeleton overlay, so bones stay readable. */
+const DEBUG_PET_ALPHA = 0.45;
+/** Weight of the newest frame in the frame-time moving average. */
+const FRAME_EMA = 0.1;
+/** Seconds between perf text rebuilds; building strings every frame would allocate. */
+const HUD_INTERVAL = 0.25;
 
 /**
  * Draws a simulation snapshot. Read-only with respect to the simulation, so
@@ -13,6 +22,14 @@ export class CanvasRenderer {
   private readonly height: number;
   private dpr = 0;
   private readonly sky: CanvasGradient;
+  private readonly overlay = new DebugOverlay();
+  /** Draws the skeleton / IK overlay on top of the pet. */
+  debug = false;
+  private frameMs = 0;
+  private hudTimer = HUD_INTERVAL;
+  private perfText = '';
+  private stateText = '';
+  private stateFor: PetBehavior | null = null;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     const ctx = canvas.getContext('2d');
@@ -50,7 +67,9 @@ export class CanvasRenderer {
     this.canvas.height = Math.round(this.height * dpr);
   };
 
-  draw(sim: PetSimulation): void {
+  /** `frameSeconds` is the real (unclamped) time since the last frame, used for the perf HUD. */
+  draw(sim: PetSimulation, frameSeconds = 0): void {
+    this.trackFrameTime(frameSeconds);
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.fillStyle = this.sky;
@@ -58,6 +77,7 @@ export class CanvasRenderer {
 
     this.drawGround(sim.groundY);
     this.drawPet(sim);
+    if (this.debug) this.overlay.draw(ctx, sim);
     if (sim.pointer.active) this.drawPointer(sim.pointer.pos.x, sim.pointer.pos.y);
     this.drawHud(sim);
   }
@@ -101,6 +121,7 @@ export class CanvasRenderer {
     ctx.translate(rig.hips.x, 0);
     ctx.scale(sx, 1);
     ctx.translate(-rig.hips.x, 0);
+    ctx.globalAlpha = this.debug ? DEBUG_PET_ALPHA : 1;
     drawPet(ctx, rig);
     ctx.restore();
   }
@@ -114,10 +135,33 @@ export class CanvasRenderer {
     ctx.stroke();
   }
 
+  private trackFrameTime(seconds: number): void {
+    // Skip the first frame and stalls (tab switches) so one outlier doesn't skew the average.
+    if (seconds <= 0 || seconds > 1) return;
+    const ms = seconds * 1000;
+    this.frameMs = this.frameMs === 0 ? ms : this.frameMs + (ms - this.frameMs) * FRAME_EMA;
+    this.hudTimer += seconds;
+    if (this.hudTimer >= HUD_INTERVAL) {
+      this.hudTimer = 0;
+      this.perfText = `${Math.round(1000 / this.frameMs)} fps  ${this.frameMs.toFixed(1)} ms`;
+    }
+  }
+
   private drawHud(sim: PetSimulation): void {
     const ctx = this.ctx;
+    // Rebuilt only when the behavior changes, not every frame.
+    if (sim.behavior !== this.stateFor) {
+      this.stateFor = sim.behavior;
+      this.stateText = `State: ${sim.behavior.toUpperCase()}`;
+    }
     ctx.fillStyle = '#64748b';
     ctx.font = '12px ui-monospace, monospace';
-    ctx.fillText(`State: ${sim.behavior.toUpperCase()}`, 15, 25);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(this.stateText, 15, 25);
+    if (this.debug && this.perfText) {
+      ctx.fillStyle = '#22d3ee';
+      ctx.fillText(this.perfText, 15, 42);
+    }
   }
 }
