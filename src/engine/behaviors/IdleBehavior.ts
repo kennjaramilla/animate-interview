@@ -26,8 +26,8 @@ export class IdleBehavior implements Behavior {
     if (sim.pointer.active) {
       c.lookAt = sim.pointer.pos;
       // Hysteresis: only turn once the cursor has been clearly behind for a moment.
-      const forward = (sim.pointer.pos.x - rig.head.x) * c.facing;
-      this.behindFor = forward < -40 ? this.behindFor + dt : 0;
+      const forward = (sim.pointer.pos.x - rig.hips.x) * c.facing;
+      this.behindFor = forward < -30 ? this.behindFor + dt : 0;
       if (this.behindFor > 0.35) {
         c.facing = c.facing === 1 ? -1 : 1;
         this.behindFor = 0;

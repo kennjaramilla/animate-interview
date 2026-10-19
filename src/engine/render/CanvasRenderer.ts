@@ -1,4 +1,6 @@
 import type { PetSimulation } from '../core/PetSimulation';
+import { PALETTE } from '../config';
+import { drawPet } from './drawPet';
 
 /**
  * Draws a simulation snapshot. Read-only with respect to the simulation, so
@@ -10,6 +12,7 @@ export class CanvasRenderer {
   private readonly width: number;
   private readonly height: number;
   private dpr = 0;
+  private readonly sky: CanvasGradient;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     const ctx = canvas.getContext('2d');
@@ -24,6 +27,11 @@ export class CanvasRenderer {
     canvas.style.maxWidth = `${width}px`;
     canvas.style.height = 'auto';
     canvas.style.touchAction = 'none';
+
+    // Built once; gradients are reusable objects, so the frame loop allocates none.
+    this.sky = ctx.createLinearGradient(0, 0, 0, height);
+    this.sky.addColorStop(0, PALETTE.skyTop);
+    this.sky.addColorStop(1, PALETTE.skyBottom);
 
     this.resize();
     window.addEventListener('resize', this.resize);
@@ -45,7 +53,8 @@ export class CanvasRenderer {
   draw(sim: PetSimulation): void {
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    ctx.clearRect(0, 0, this.width, this.height);
+    ctx.fillStyle = this.sky;
+    ctx.fillRect(0, 0, this.width, this.height);
 
     this.drawGround(sim.groundY);
     this.drawPet(sim);
@@ -55,9 +64,9 @@ export class CanvasRenderer {
 
   private drawGround(groundY: number): void {
     const ctx = this.ctx;
-    ctx.fillStyle = '#0b1220';
+    ctx.fillStyle = PALETTE.ground;
     ctx.fillRect(0, groundY, this.width, this.height - groundY);
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = PALETTE.groundLine;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, groundY);
@@ -67,22 +76,33 @@ export class CanvasRenderer {
 
   private drawPet(sim: PetSimulation): void {
     const ctx = this.ctx;
-    const { hips, head } = sim.rig;
+    const rig = sim.rig;
+    const sx = rig.displayScaleX;
 
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#94a3b8';
-
+    // Contact shadow shrinks and fades as the pet leaves the ground.
+    const lift = Math.min(rig.height / 120, 1);
+    ctx.fillStyle = PALETTE.shadow;
+    ctx.globalAlpha = 1 - lift * 0.6;
     ctx.beginPath();
-    ctx.arc(hips.x, hips.y, 25, 0, Math.PI * 2);
-    ctx.fillStyle = '#475569';
+    ctx.ellipse(
+      rig.hips.x + rig.facing * sx * 38,
+      sim.groundY + 3,
+      Math.max(60 * Math.abs(sx), 30) * (1 - lift * 0.4),
+      6,
+      0,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
-    ctx.stroke();
+    ctx.globalAlpha = 1;
 
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, 17.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#64748b';
-    ctx.fill();
-    ctx.stroke();
+    // Turning: scale x about the hips from -1 to 1 so the mirror reads as a turn.
+    ctx.save();
+    ctx.translate(rig.hips.x, 0);
+    ctx.scale(sx, 1);
+    ctx.translate(-rig.hips.x, 0);
+    drawPet(ctx, rig);
+    ctx.restore();
   }
 
   private drawPointer(x: number, y: number): void {
