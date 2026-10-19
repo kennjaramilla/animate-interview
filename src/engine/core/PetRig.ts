@@ -215,6 +215,7 @@ export class PetRig {
   }
 
   private updateLocomotion(c: RigControls, dt: number): void {
+    if (c.jump > 0) this.jump(c.jump);
     // Steer towards the target with a speed cap; in the air momentum is kept.
     const desired = this.airborne
       ? this.velocityX

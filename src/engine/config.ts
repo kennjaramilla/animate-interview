@@ -57,4 +57,17 @@ export const PALETTE = {
   collar: '#e11d48',
   tag: '#fbbf24',
   shadow: 'rgba(0, 0, 0, 0.35)',
+  ballFelt: '#d9f035',
+  ballShade: '#9bb51e',
+  ballSeam: '#f8fafc',
+};
+
+export const BALL = {
+  radius: 8,
+  /** Share of the normal speed kept on each bounce. */
+  restitution: 0.55,
+  /** Exponential rolling friction rate (1/s). */
+  friction: 1.6,
+  /** Below this ground speed a rolling ball is considered settled. */
+  restSpeed: 6,
 };

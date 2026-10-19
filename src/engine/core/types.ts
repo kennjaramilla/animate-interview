@@ -28,4 +28,6 @@ export interface RigControls {
   reachFor: Vec2 | null;
   /** 0 = standing tall, 1 = crouched low. */
   crouch: number;
+  /** One-shot jump request: upward launch speed in px/s, 0 for none. Reset every step. */
+  jump: number;
 }
