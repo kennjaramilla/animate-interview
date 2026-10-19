@@ -1,6 +1,7 @@
 import type { PetSimulation } from '../core/PetSimulation';
 import type { PetBehavior } from '../core/types';
-import { PALETTE } from '../config';
+import { BALL, PALETTE } from '../config';
+import { BallPainter } from './drawBall';
 import { drawPet } from './drawPet';
 import { DebugOverlay } from './DebugOverlay';
 
@@ -30,6 +31,7 @@ export class CanvasRenderer {
   private perfText = '';
   private stateText = '';
   private stateFor: PetBehavior | null = null;
+  private readonly ball: BallPainter;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     const ctx = canvas.getContext('2d');
@@ -49,6 +51,7 @@ export class CanvasRenderer {
     this.sky = ctx.createLinearGradient(0, 0, 0, height);
     this.sky.addColorStop(0, PALETTE.skyTop);
     this.sky.addColorStop(1, PALETTE.skyBottom);
+    this.ball = new BallPainter(ctx, BALL.radius);
 
     this.resize();
     window.addEventListener('resize', this.resize);
@@ -76,7 +79,10 @@ export class CanvasRenderer {
     ctx.fillRect(0, 0, this.width, this.height);
 
     this.drawGround(sim.groundY);
+    this.ball.drawShadow(this.ctx, sim.ball, sim.groundY);
     this.drawPet(sim);
+    // After the pet, so a held ball reads as gripped in the mouth.
+    this.ball.draw(this.ctx, sim.ball);
     if (this.debug) this.overlay.draw(ctx, sim);
     if (sim.pointer.active) this.drawPointer(sim.pointer.pos.x, sim.pointer.pos.y);
     this.drawHud(sim);
