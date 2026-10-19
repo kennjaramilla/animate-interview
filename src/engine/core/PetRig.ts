@@ -3,6 +3,7 @@ import { type IkChain, createChain, solveFabrik, solveTwoBone } from '../math/ik
 import { clamp, damp, dampAngle, lerp, smoothstep, TAU } from '../math/scalar';
 import { type Spring1, type Spring2, stepSpring1, stepSpring2 } from '../math/spring';
 import { RIG, WORLD } from '../config';
+import { Gait } from './gait';
 import type { Facing, RigControls } from './types';
 
 const TURN_SPRING = { frequency: 2.4, dampingRatio: 0.9 };
@@ -69,6 +70,8 @@ export class PetRig {
   excitement = 0;
   airborne = false;
 
+  /** Diagonal pairs trot together: far-hind + near-front, far-front + near-hind. */
+  private readonly gait = new Gait([1, 0, 0, 1]);
   private readonly turn: Spring1 = { value: 1, velocity: 0 };
   private readonly crouch: Spring1 = { value: 0, velocity: 0 };
   private readonly stretch: Spring1 = { value: 1, velocity: 0 };
@@ -164,6 +167,7 @@ export class PetRig {
     if (this.airborne) return;
     this.airborne = true;
     this.vy = -speed;
+    this.gait.reset();
   }
 
   get height(): number {
@@ -197,6 +201,7 @@ export class PetRig {
       l.foot.x = 2 * cx - l.foot.x;
     }
     this.head.x = 2 * cx - this.head.x;
+    this.gait.reset();
   }
 
   private updateLocomotion(c: RigControls, dt: number): void {
@@ -222,7 +227,7 @@ export class PetRig {
       }
     }
 
-    this.hips.y = this.groundY - RIG.hipHeight + this.crouch.value * 14 + this.lift;
+    this.hips.y = this.groundY - RIG.hipHeight + this.crouch.value * 14 + this.lift + this.gait.bob;
   }
 
   private updateBreathAndBlink(dt: number): void {
@@ -363,23 +368,24 @@ export class PetRig {
     for (const l of this.legs) {
       const base = l.hind ? spine[0] : spine[spine.length - 1];
       set(l.socket, base.x + f * l.socketForward, base.y + (l.hind ? 9 : 11));
+    }
 
-      if (this.airborne) {
+    if (this.airborne) {
+      for (const l of this.legs) {
         // Tuck the legs while flying: hind legs back, front legs forward.
-        this.tmp.x = l.socket.x + f * (l.hind ? -12 : 14);
-        this.tmp.y = l.socket.y + 32;
-        l.target.x = damp(l.target.x, this.tmp.x, 14, dt);
-        l.target.y = damp(l.target.y, this.tmp.y, 14, dt);
-      } else {
-        this.legHome(l, this.tmp);
-        l.target.x = damp(l.target.x, this.tmp.x, 10, dt);
-        l.target.y = this.groundY;
+        l.target.x = damp(l.target.x, l.socket.x + f * (l.hind ? -12 : 14), 14, dt);
+        l.target.y = damp(l.target.y, l.socket.y + 32, 14, dt);
       }
+    } else {
+      this.gait.update(this.legs, f * 2, this.velocityX, this.groundY, dt);
+    }
 
+    for (const l of this.legs) {
       // Hind knees point forward, front elbows point back.
       solveTwoBone(l.socket, l.target, l.upper, l.lower, l.hind ? f : (-f as Facing), l.knee, l.foot);
     }
   }
+
 
   private updateTail(dt: number): void {
     const f = this.facing;
