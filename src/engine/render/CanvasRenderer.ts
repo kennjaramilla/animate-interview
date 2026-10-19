@@ -1,6 +1,10 @@
 import type { PetSimulation } from '../core/PetSimulation';
 import { PALETTE } from '../config';
 import { drawPet } from './drawPet';
+import { DebugOverlay } from './DebugOverlay';
+
+/** Pet opacity under the skeleton overlay, so bones stay readable. */
+const DEBUG_PET_ALPHA = 0.45;
 
 /**
  * Draws a simulation snapshot. Read-only with respect to the simulation, so
@@ -13,6 +17,9 @@ export class CanvasRenderer {
   private readonly height: number;
   private dpr = 0;
   private readonly sky: CanvasGradient;
+  private readonly overlay = new DebugOverlay();
+  /** Draws the skeleton / IK overlay on top of the pet. */
+  debug = false;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     const ctx = canvas.getContext('2d');
@@ -58,6 +65,7 @@ export class CanvasRenderer {
 
     this.drawGround(sim.groundY);
     this.drawPet(sim);
+    if (this.debug) this.overlay.draw(ctx, sim);
     if (sim.pointer.active) this.drawPointer(sim.pointer.pos.x, sim.pointer.pos.y);
     this.drawHud(sim);
   }
@@ -101,6 +109,7 @@ export class CanvasRenderer {
     ctx.translate(rig.hips.x, 0);
     ctx.scale(sx, 1);
     ctx.translate(-rig.hips.x, 0);
+    ctx.globalAlpha = this.debug ? DEBUG_PET_ALPHA : 1;
     drawPet(ctx, rig);
     ctx.restore();
   }

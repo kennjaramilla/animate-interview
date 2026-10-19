@@ -162,6 +162,16 @@ export class PetRig {
     return set(out, this.hips.x + (p.x - this.hips.x) * this.displayScaleX, p.y);
   }
 
+  /** Where the spine IK is pulling the chest this step (read-only, for debug views). */
+  get chestIkTarget(): Readonly<Vec2> {
+    return this.chestTarget;
+  }
+
+  /** Where the neck IK is pulling the head this step (read-only, for debug views). */
+  get neckIkTarget(): Readonly<Vec2> {
+    return this.neckTarget;
+  }
+
   /** Launches the body upwards; gravity and landing are handled in update. */
   jump(speed: number): void {
     if (this.airborne) return;

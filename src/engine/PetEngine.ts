@@ -5,6 +5,7 @@ import { PointerInput } from './input/PointerInput';
 import { CanvasRenderer } from './render/CanvasRenderer';
 
 export type { PetBehavior } from './core/types';
+export type { BehaviorListener } from './core/PetSimulation';
 
 /**
  * Host for the pet: owns the frame loop and wires DOM input and the canvas
@@ -37,6 +38,21 @@ export class PetAnimationEngine {
   /** Notifies on every behavior switch, including ones the simulation makes itself. Returns an unsubscribe. */
   public onBehaviorChange(listener: BehaviorListener): () => void {
     return this.sim.onBehaviorChange(listener);
+  }
+
+  get debug(): boolean {
+    return this.renderer.debug;
+  }
+
+  /** Shows or hides the skeleton / IK overlay and perf HUD. */
+  public setDebug(enabled: boolean): void {
+    this.renderer.debug = enabled;
+  }
+
+  /** Flips the debug overlay and returns the new state. */
+  public toggleDebug(): boolean {
+    this.renderer.debug = !this.renderer.debug;
+    return this.renderer.debug;
   }
 
   private startLoop() {
