@@ -1,6 +1,7 @@
 import type { PetSimulation } from '../core/PetSimulation';
 import type { PetRig } from '../core/PetRig';
 import { type Vec2, vec2 } from '../math/vec2';
+import { MESH_COLS, MESH_ROWS } from '../core/bodyMesh';
 
 const COLORS = {
   bone: 'rgba(34, 211, 238, 0.9)',
@@ -34,13 +35,14 @@ export class DebugOverlay {
   private readonly a = vec2();
   private readonly b = vec2();
 
-  draw(ctx: CanvasRenderingContext2D, sim: PetSimulation): void {
+  draw(ctx: CanvasRenderingContext2D, sim: PetSimulation, textured = false): void {
     const rig = sim.rig;
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    this.drawMesh(ctx, rig);
+    if (textured) this.drawTextureMesh(ctx, rig);
+    else this.drawMesh(ctx, rig);
 
     // Far legs first and dimmer, mirroring the draw order of the pet itself.
     for (const leg of rig.legs) if (leg.far) this.drawLeg(ctx, rig, leg.socket, leg.knee, leg.foot, COLORS.boneFar);
@@ -67,6 +69,36 @@ export class DebugOverlay {
       rig.toDisplay(this.a, p);
       ctx.fillRect(this.a.x - 1.25, this.a.y - 1.25, 2.5, 2.5);
     }
+  }
+
+  /** Wireframe of the texture mesh: grid lines plus the diagonal each quad is split along. */
+  private drawTextureMesh(ctx: CanvasRenderingContext2D, rig: PetRig): void {
+    const mesh = rig.bodyMesh;
+    ctx.strokeStyle = COLORS.mesh;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let row = 0; row < MESH_ROWS; row++) {
+      for (let col = 0; col < MESH_COLS; col++) {
+        const i = row * MESH_COLS + col;
+        rig.toDisplay(this.a, mesh[i]);
+        if (col < MESH_COLS - 1) {
+          rig.toDisplay(this.b, mesh[i + 1]);
+          ctx.moveTo(this.a.x, this.a.y);
+          ctx.lineTo(this.b.x, this.b.y);
+        }
+        if (row < MESH_ROWS - 1) {
+          rig.toDisplay(this.b, mesh[i + MESH_COLS]);
+          ctx.moveTo(this.a.x, this.a.y);
+          ctx.lineTo(this.b.x, this.b.y);
+          if (col < MESH_COLS - 1) {
+            rig.toDisplay(this.b, mesh[i + MESH_COLS + 1]);
+            ctx.moveTo(this.a.x, this.a.y);
+            ctx.lineTo(this.b.x, this.b.y);
+          }
+        }
+      }
+    }
+    ctx.stroke();
   }
 
   /** Polyline through the joints with a dot per joint; the root gets a ring. */
