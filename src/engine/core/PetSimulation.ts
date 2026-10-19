@@ -33,6 +33,8 @@ export class PetSimulation {
       facing: 1,
       excitement: 0,
       lookAt: null,
+      reachFor: null,
+      crouch: 0,
     };
     this.behaviors = createBehaviors();
     this.current = this.behaviors.idle;
@@ -62,6 +64,7 @@ export class PetSimulation {
   update(dt: number): void {
     this.time += dt;
     this.controls.lookAt = null;
+    this.controls.reachFor = null;
     this.current.update(this, dt);
     this.rig.update(this.controls, dt);
   }

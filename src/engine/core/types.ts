@@ -24,4 +24,8 @@ export interface RigControls {
   excitement: number;
   /** Point the head and eyes track this step, or null for a resting gaze. */
   lookAt: Vec2 | null;
+  /** Point the mouth should reach for (stretching neck and spine), or null. Wins over lookAt. */
+  reachFor: Vec2 | null;
+  /** 0 = standing tall, 1 = crouched low. */
+  crouch: number;
 }
