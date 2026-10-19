@@ -1,5 +1,5 @@
 import { LOOP } from './config';
-import { PetSimulation } from './core/PetSimulation';
+import { type BehaviorListener, PetSimulation } from './core/PetSimulation';
 import type { PetBehavior } from './core/types';
 import { PointerInput } from './input/PointerInput';
 import { CanvasRenderer } from './render/CanvasRenderer';
@@ -34,6 +34,11 @@ export class PetAnimationEngine {
     this.sim.setBehavior(behavior);
   }
 
+  /** Notifies on every behavior switch, including ones the simulation makes itself. Returns an unsubscribe. */
+  public onBehaviorChange(listener: BehaviorListener): () => void {
+    return this.sim.onBehaviorChange(listener);
+  }
+
   private startLoop() {
     this.lastTime = performance.now();
     this.animationFrameId = requestAnimationFrame(this.renderStep);
@@ -58,6 +63,7 @@ export class PetAnimationEngine {
   public destroy() {
     if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
+    this.sim.clearBehaviorListeners();
     this.input.dispose();
     this.renderer.dispose();
   }

@@ -5,6 +5,8 @@ import type { Behavior } from '../behaviors/Behavior';
 import { PetRig } from './PetRig';
 import type { PetBehavior, PointerState, RigControls } from './types';
 
+export type BehaviorListener = (behavior: PetBehavior) => void;
+
 /**
  * The whole pet world as plain data + math. No DOM, canvas or timers: the
  * host feeds it pointer positions and delta time, and reads state back to
@@ -21,6 +23,7 @@ export class PetSimulation {
 
   private readonly behaviors: Record<PetBehavior, Behavior>;
   private current: Behavior;
+  private readonly behaviorListeners: BehaviorListener[] = [];
 
   constructor(width: number, height: number) {
     this.width = width;
@@ -50,6 +53,21 @@ export class PetSimulation {
     this.current.exit(this);
     this.current = this.behaviors[name];
     this.current.enter(this);
+    // Snapshot so a listener may unsubscribe while being notified.
+    for (const listener of this.behaviorListeners.slice()) listener(name);
+  }
+
+  /** Called after every setBehavior, including switches a behavior makes itself. Returns an unsubscribe. */
+  onBehaviorChange(listener: BehaviorListener): () => void {
+    this.behaviorListeners.push(listener);
+    return () => {
+      const i = this.behaviorListeners.indexOf(listener);
+      if (i >= 0) this.behaviorListeners.splice(i, 1);
+    };
+  }
+
+  clearBehaviorListeners(): void {
+    this.behaviorListeners.length = 0;
   }
 
   setPointer(x: number, y: number): void {
