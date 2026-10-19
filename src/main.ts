@@ -1,3 +1,4 @@
+import './style.css';
 import { PetAnimationEngine } from './engine/PetEngine';
 
 const appDiv = document.getElementById('app') as HTMLDivElement;
