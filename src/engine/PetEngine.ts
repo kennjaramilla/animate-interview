@@ -61,9 +61,10 @@ export class PetAnimationEngine {
   }
 
   private readonly renderStep = (timestamp: number): void => {
-    // Clamp so a backgrounded tab doesn't come back with one giant step.
-    let remaining = Math.min(Math.max((timestamp - this.lastTime) / 1000, 0), LOOP.maxFrameTime);
+    const frameSeconds = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
+    // Clamp so a backgrounded tab doesn't come back with one giant step.
+    let remaining = Math.min(Math.max(frameSeconds, 0), LOOP.maxFrameTime);
 
     // Sub-step long frames so springs and ball physics behave the same at 30, 60 or 144Hz.
     while (remaining > 1e-6) {
@@ -72,7 +73,7 @@ export class PetAnimationEngine {
       remaining -= step;
     }
 
-    this.renderer.draw(this.sim);
+    this.renderer.draw(this.sim, frameSeconds);
     this.animationFrameId = requestAnimationFrame(this.renderStep);
   };
 
