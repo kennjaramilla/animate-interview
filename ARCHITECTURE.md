@@ -46,6 +46,24 @@ The dog is a side-view skeleton, built and drawn in code (no sprites):
 - **Turning** mirrors the pose around the hips. The renderer then animates the scale from −1 to 1
   so it reads as a turn instead of a snap.
 
+## Textured body (image mesh)
+
+The body can also be drawn from an image asset (`render/assets/dog-body.svg`) warped over a
+mesh, which is how tools like Spine or DragonBones skin a sprite. It's on by default; press `T`
+to switch to the vector outline.
+
+- The mesh is a 3 × 11 grid in "spine space": one column per spine sample plus a cap at each
+  end, with rows above, on and below the spine. The image is authored in the same space, so
+  each vertex's rest position is also its texture coordinate.
+- Every step the rig moves the grid with the spine (same normals, same breathing scale as the
+  outline), so the image bends, stretches and breathes with the bones.
+- Canvas 2D can't draw textured triangles, so each of the 40 triangles is drawn with its own
+  affine transform (solved from the two edge vectors of the rest and deformed triangles),
+  clipped to the triangle. Clip edges are grown by under a pixel to hide anti-aliasing seams.
+- The SVG is rasterised once at load, and each triangle only copies the texels under it.
+
+The skeleton view (`D`) shows the triangle wireframe while textured mode is on.
+
 ## Gait
 
 Feet stay planted in world space while the body moves over them. When a foot trails its home
