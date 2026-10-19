@@ -72,7 +72,7 @@ export class Ball implements Projectile {
   launch(vx: number, vy: number): void {
     this.state = 'free';
     set(this.vel, vx, vy);
-    // Backspin-free throw: the ball tumbles forwards at roughly rolling speed.
+    // Thrown balls tumble forwards, slower than they would roll.
     this.spinRate = (vx / this.radius) * 0.5;
     this.settled = false;
     this.onFloor = false;
