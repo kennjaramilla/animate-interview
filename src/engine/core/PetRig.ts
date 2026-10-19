@@ -4,6 +4,7 @@ import { clamp, damp, dampAngle, lerp, smoothstep, TAU } from '../math/scalar';
 import { type Spring1, type Spring2, stepSpring1, stepSpring2 } from '../math/spring';
 import { RIG, WORLD } from '../config';
 import { Gait } from './gait';
+import { MESH_COLS, MESH_FRONT_CAP, MESH_HALF_HEIGHT, MESH_REAR_CAP, MESH_ROWS, SPINE_SAMPLES } from './bodyMesh';
 import type { Facing, RigControls } from './types';
 
 const TURN_SPRING = { frequency: 2.4, dampingRatio: 0.9 };
@@ -12,8 +13,6 @@ const STRETCH_SPRING = { frequency: 4, dampingRatio: 0.6 };
 const EAR_SPRING = { frequency: 2.4, dampingRatio: 0.22 };
 const PUPIL_SPRING = { frequency: 7, dampingRatio: 0.75 };
 
-/** Samples taken along the spine curve to build the body outline. */
-const SPINE_SAMPLES = 9;
 
 export interface Leg {
   readonly hind: boolean;
@@ -54,6 +53,8 @@ export class PetRig {
   readonly tail: Vec2[];
   /** Closed outline around the spine, deformed every step (breathing, stretch). */
   readonly bodyRing: Vec2[];
+  /** Grid that carries the body texture (row-major, see bodyMesh.ts); deformed with the ring. */
+  readonly bodyMesh: Vec2[];
   /** Pupil offset inside the eye, head-local. */
   readonly pupil: Spring2 = { pos: vec2(1, 0), vel: vec2() };
   readonly ear: Spring1 = { value: 0, velocity: 0 };
@@ -147,6 +148,8 @@ export class PetRig {
     for (let i = 0; i < SPINE_SAMPLES; i++) this.spineSamples.push(vec2());
     this.bodyRing = [];
     for (let i = 0; i < SPINE_SAMPLES * 2 + 2; i++) this.bodyRing.push(vec2());
+    this.bodyMesh = [];
+    for (let i = 0; i < MESH_COLS * MESH_ROWS; i++) this.bodyMesh.push(vec2());
 
     this.solveLegs(0);
     for (const l of this.legs) this.legHome(l, l.target);
@@ -468,6 +471,32 @@ export class PetRig {
     }
     this.sampleFrame(0);
     set(ring[0], s[0].x - this.tx * 14 + this.nx * 2, s[0].y - this.ty * 14 + this.ny * 2);
+
+    this.updateBodyMesh();
+  }
+
+  /**
+   * Same skinning for the texture grid: each column sits on a spine sample
+   * (plus a cap column at each end) and its rows are pushed along the normal.
+   * Breathing scales the rows exactly like the outline radii, so the image
+   * swells with the chest.
+   */
+  private updateBodyMesh(): void {
+    const s = this.spineSamples;
+    const last = SPINE_SAMPLES - 1;
+    for (let col = 0; col < MESH_COLS; col++) {
+      const k = clamp(col - 1, 0, last);
+      this.sampleFrame(k);
+      const t = k / last;
+      const ext = col === 0 ? -MESH_REAR_CAP : col === MESH_COLS - 1 ? MESH_FRONT_CAP : 0;
+      const cx = s[k].x + this.tx * ext;
+      const cy = s[k].y + this.ty * ext;
+      const up = MESH_HALF_HEIGHT * (1 + this.breath * 0.05 * smoothstep(0.35, 1, t));
+      const down = MESH_HALF_HEIGHT * (1 + this.breath * 0.08 * smoothstep(0.3, 1, t));
+      set(this.bodyMesh[col], cx + this.nx * up, cy + this.ny * up);
+      set(this.bodyMesh[MESH_COLS + col], cx, cy);
+      set(this.bodyMesh[2 * MESH_COLS + col], cx - this.nx * down, cy - this.ny * down);
+    }
   }
 
   /** Tangent and upward normal of the spine curve at sample k. */
