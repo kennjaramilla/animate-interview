@@ -67,7 +67,7 @@ export class PetAnimationEngine {
     // Boilerplate default movement: Make the target coordinates slightly guide body orientation
     // Candidate needs to overwrite this with precise image-mesh rigging / inverse kinematics logic
     if (this.activeBehavior === 'walk') {
-      this.petRigAnchor.x += Math.sin(performance.now() * 0.005) * 2;
+      this.petRigAnchor.x += Math.sin(performance.now() * 0.005) * 120 * deltaTime;
     }
   }
 
