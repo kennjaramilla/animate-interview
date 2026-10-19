@@ -392,8 +392,8 @@ export class PetRig {
     }
 
     for (const l of this.legs) {
-      // Hind knees point forward, front elbows point back.
-      solveTwoBone(l.socket, l.target, l.upper, l.lower, l.hind ? f : (-f as Facing), l.knee, l.foot);
+      // Both joints fold backwards: the hock on hind legs, the elbow on front legs.
+      solveTwoBone(l.socket, l.target, l.upper, l.lower, -f as Facing, l.knee, l.foot);
     }
   }
 

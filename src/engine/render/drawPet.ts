@@ -20,6 +20,23 @@ export function drawPet(ctx: CanvasRenderingContext2D, rig: PetRig): void {
 }
 
 function drawLeg(ctx: CanvasRenderingContext2D, leg: Leg, color: string): void {
+  if (leg.hind) {
+    // Haunch: a thick thigh mass over the socket so the hind leg reads as a dog's, not a stick.
+    const angle = Math.atan2(leg.knee.y - leg.socket.y, leg.knee.x - leg.socket.x);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(
+      (leg.socket.x * 2 + leg.knee.x) / 3,
+      (leg.socket.y * 2 + leg.knee.y) / 3,
+      15,
+      11,
+      angle,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
   ctx.strokeStyle = color;
   ctx.lineWidth = leg.hind ? 14 : 11;
   ctx.beginPath();
